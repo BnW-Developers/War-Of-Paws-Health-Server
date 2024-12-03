@@ -1,6 +1,7 @@
 import { svrListModel } from '../models/svrList.model.js';
 import { svrPortListModel } from '../models/svrPortList.model.js';
 import CustomErr from '../utils/error/CustomErr.js';
+import logger from '../utils/log/logger.js';
 
 class checkSvrService {
   #svrListModel;
@@ -52,7 +53,7 @@ class checkSvrService {
       this.lowServer = ip;
       this.lowCnt = sessionCnt;
     }
-    console.log(`${ip} - cpu: ${cpuUsage} %, mem: ${memUsage}, sessionCnt: ${sessionCnt}`);
+    logger.info(`${ip} - cpu: ${cpuUsage} %, mem: ${memUsage}, sessionCnt: ${sessionCnt}`);
   }
 
   // 게임서버 최초 등재시 포트 기록
@@ -70,7 +71,7 @@ class checkSvrService {
     if (verification) throw new CustomErr('중복 포트입니다.', 400);
 
     this.#svrPortListModel.set(ip, port);
-    console.log(`nginx ${port}번 포트에 ${ip}:가 매핑되었습니다.`);
+    logger.info(`nginx ${port}번 포트에 ${ip}:가 매핑되었습니다.`);
     // TODO: nginx에 포트 정보 넘기기
   }
 
@@ -93,7 +94,7 @@ class checkSvrService {
     }
 
     // TODO: 게임서버에 유저 토큰 전달
-    console.log(`[match] 유저 토큰정보를 ${this.lowServer} 서버로 이첩 하달하였습니다.`);
+    logger.info(`[match] 유저 토큰정보를 ${this.lowServer} 서버로 이첩 하달하였습니다.`);
 
     return this.#svrPortListModel.find(this.lowServer);
   }
