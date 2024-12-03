@@ -9,7 +9,7 @@ export default async function (req, _, next) {
       // 토큰이 없을 시 에러
       throw new CustomErr('요청한 사용자의 API-KEY가 없습니다.', 401);
 
-    if (!checkHashed(authorization))
+    if (!(await checkHashed(authorization)))
       // 지정된 키와 다를 경우
       throw new CustomErr('일치하지 않은 API-KEY 정보입니다.', 401);
 
