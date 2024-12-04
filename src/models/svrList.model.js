@@ -5,7 +5,7 @@ export class svrListModel {
   }
 
   get() {
-    return Object.entries(this.#svrList);
+    return this.#svrList;
   }
 
   has(ip) {

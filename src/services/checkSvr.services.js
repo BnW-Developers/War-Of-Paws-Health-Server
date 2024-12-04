@@ -17,20 +17,25 @@ class checkSvrService {
   // 모니터링용 서비스
   getSvrStatus() {
     const svrList = this.#svrListModel.get();
-    const svrData = [];
+
     if (svrList) {
-      for ([svrIp, svrInfos] of Object.entries(svrList)) {
-        const svrPort = this.#svrPortListModel.get(svrIp);
+      const svrData = [];
+
+      for (const [svrIp, { cpuUsage, memUsage, sessionCnt }] of svrList) {
+        const svrPort = this.#svrPortListModel.find(svrIp);
         svrData.push({
           svrIp,
           svrPort,
-          cpuUsage: svrInfos[0],
-          memUsage: svrInfos[1],
-          sessionCnt: svrInfos[2],
+          cpuUsage,
+          memUsage,
+          sessionCnt,
         });
       }
+
       return svrData;
     }
+
+    return [];
   }
 
   // 게임서버 헬스체크용 서비스
