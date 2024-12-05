@@ -1,4 +1,4 @@
-import { HOST, KEY, PORT, SALT } from "../constants/env.js";
+import { HOST, KEY, PORT, SALT } from '../constants/env.js';
 
 export const config = {
   server: {
@@ -7,6 +7,6 @@ export const config = {
   },
   auth: {
     key: KEY,
-    salt: SALT,
+    salt: SALT || 12,
   },
 };
