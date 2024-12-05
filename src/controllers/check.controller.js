@@ -18,10 +18,11 @@ export class CheckController {
   };
 
   // 게임서버 실시간 상태체크용
-  setSvrStatus = (req, res, next) => {
+  setSvrStatus = async (req, res, next) => {
     try {
       const { ip, cpuUsage, memUsage, sessionCnt } = req.body;
-      const result = this.#chkSvrService.setSvrStatus(ip, cpuUsage, memUsage, sessionCnt);
+      const result = await this.#chkSvrService.setSvrStatus(ip, cpuUsage, memUsage, sessionCnt);
+
       return res.status(200).json({ message: '성공적으로 서버 정보가 입력되었습니다.' });
     } catch (err) {
       next(err);

@@ -1,5 +1,7 @@
+import { config } from '../config/config.js';
 import { svrListModel } from '../models/svrList.model.js';
 import { svrPortListModel } from '../models/svrPortList.model.js';
+import { hashed } from '../utils/auth/hashed.util.js';
 import CustomErr from '../utils/error/CustomErr.js';
 import logger from '../utils/log/logger.js';
 
@@ -39,7 +41,7 @@ class checkSvrService {
   }
 
   // 게임서버 헬스체크용 서비스
-  setSvrStatus(ip, cpuUsage, memUsage, sessionCnt) {
+  async setSvrStatus(ip, cpuUsage, memUsage, sessionCnt) {
     const ipAddress = ip.split('.');
     const incorrectIp = ipAddress.some((ip) => ip < 0 || ip > 255);
     const incorrectCpu = cpuUsage > 100 || cpuUsage < 0;
@@ -49,7 +51,9 @@ class checkSvrService {
       throw new CustomErr('아이피 형식이 올바르지 않습니다.', 400);
     if (incorrectCpu || incorrectMem)
       throw new CustomErr('서버 입력 정보가 올바르지 않습니다.', 400);
-    if (!this.#svrListModel.has(ip)) this.setSvrPort(ip, this.portNum++);
+
+    if (!this.#svrListModel.has(ip)) await this.setSvrPort(ip, this.portNum++);
+
     const result = this.#svrListModel.set(ip, { cpuUsage, memUsage, sessionCnt });
     if (!result) throw new CustomErr('서버 정보 입력에 실패하였습니다.', 500);
     if (ip === this.lowServer && sessionCnt !== this.lowCnt) {
@@ -62,7 +66,7 @@ class checkSvrService {
   }
 
   // 게임서버 최초 등재시 포트 기록
-  setSvrPort(ip, port) {
+  async setSvrPort(ip, port) {
     const ipAddress = ip.split('.');
     const incorrectIp = ipAddress.some((ip) => ip < 0 || ip > 255);
     const incorrectPort = port < 1 || port > 65535;
@@ -78,6 +82,25 @@ class checkSvrService {
     this.#svrPortListModel.set(ip, port);
     logger.info(`nginx ${port}번 포트에 ${ip}:가 매핑되었습니다.`);
     // TODO: nginx에 포트 정보 넘기기
+
+    // API 요청
+    const url = 'http://10.178.0.7:13571/config/serverList';
+    const key = await hashed(config.auth.key);
+    const data = {
+      ip,
+      port,
+    };
+
+    const response = await fetch(url, {
+      method: 'POST', // HTTP 메서드: POST
+      headers: {
+        'Content-Type': 'application/json', // JSON 데이터 전송
+        authorization: key,
+      },
+      body: JSON.stringify(data), // 데이터를 JSON 문자열로 변환하여 전송
+    });
+
+    if (!response.ok) throw new CustomErr(`서버오류`, 500);
   }
 
   // 매칭서버 요청 관련 현재 기준 least 서버 반환 서비스
