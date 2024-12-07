@@ -3,7 +3,7 @@ import { SvrListModel } from '../models/svrList.model.js';
 import { hashed } from '../utils/auth/hashed.util.js';
 import CustomErr from '../utils/error/CustomErr.js';
 import logger from '../utils/log/logger.js';
-import { writeSvrToJson } from '../utils/util/svrJson.js';
+import { deleteSvrFromJson, writeSvrToJson } from '../utils/util/svrJson.js';
 
 class checkSvrService {
   #svrListModel;
@@ -11,6 +11,7 @@ class checkSvrService {
     this.#svrListModel = new SvrListModel();
     this.lowServer = null;
     this.lowCnt = Infinity;
+    this.interval = setInterval(this.checkDeadSvr.bind(this), 1000);
   }
 
   // 모니터링용 서비스
@@ -29,7 +30,6 @@ class checkSvrService {
           sessionCnt,
         });
       }
-
       return svrData;
     }
 
@@ -53,15 +53,16 @@ class checkSvrService {
     if (!this.#svrListModel.has(ip)) {
       let nginxPort = this.#svrListModel.getMaxPorts();
       ++nginxPort;
+      // nginx 서버 등록
+      await this.setSvrPort(ip, nginxPort);
+      await writeSvrToJson(ip, nginxPort);
       result = this.#svrListModel.set(ip, {
         nginxPort,
         cpuUsage,
         memUsage,
         sessionCnt,
+        timeStamp: Date.now(),
       });
-      writeSvrToJson(ip, nginxPort);
-      // nginx 서버 등록
-      this.setSvrPort(ip, nginxPort);
     }
     // 서버 리스트 최신화
     else {
@@ -69,6 +70,7 @@ class checkSvrService {
       result.cpuUsage = cpuUsage;
       result.memUsage = memUsage;
       result.sessionCnt = sessionCnt;
+      result.timeStamp = Date.now();
     }
 
     if (!result) throw new CustomErr('서버 정보 입력에 실패하였습니다.', 500);
@@ -82,6 +84,37 @@ class checkSvrService {
       this.lowCnt = sessionCnt;
     }
     logger.info(`${ip} - cpu: ${cpuUsage} %, mem: ${memUsage}, sessionCnt: ${sessionCnt}`);
+  }
+
+  // 주기적 상태 데이터를 받지 못한 서버 삭제용
+  async checkDeadSvr() {
+    try {
+      // 서버리스트 불러옴
+      const svrList = this.#svrListModel.get();
+      if (!svrList) return;
+      // 서버 리스트 타임스탬프 검사
+      for (const [svrIp, infos] of svrList) {
+        const now = Date.now();
+        const lastNoti = infos.timeStamp;
+        if (!lastNoti) infos.timeStamp = Date.now();
+        if (now - lastNoti > 10000) {
+          // 해당 서버 lowServer인지 검사
+          if (this.lowServer === svrIp) {
+            this.lowServer = null;
+            this.lowCnt = Infinity;
+          }
+          // 삭제 처리
+          await this.deleteSvrPort(infos.nginxPort);
+          await deleteSvrFromJson(svrIp);
+          this.#svrListModel.delete(svrIp);
+
+          // 알림
+          logger.info(`${svrIp} - 장시간 보고되지 않아 삭제 처리`);
+        }
+      }
+    } catch (err) {
+      console.error(err.message);
+    }
   }
 
   // 게임서버 최초 등재시 nginx 서버 등록용
@@ -149,6 +182,8 @@ class checkSvrService {
 
     return this.#svrListModel.findPort(this.lowServer);
   }
+
+  server;
 }
 
 export default checkSvrService;
