@@ -3,6 +3,7 @@ import { SvrListModel } from '../models/svrList.model.js';
 import { hashed } from '../utils/auth/hashed.util.js';
 import CustomErr from '../utils/error/CustomErr.js';
 import logger from '../utils/log/logger.js';
+import { discordAlert } from '../utils/util/discordAlert.js';
 import { deleteSvrFromJson, writeSvrToJson } from '../utils/util/svrJson.js';
 
 class checkSvrService {
@@ -109,6 +110,7 @@ class checkSvrService {
           this.#svrListModel.delete(svrIp);
 
           // 알림
+          discordAlert(`${svrIp} - 서버가 장시간 보고되지 않아 nginx 매핑 삭제 처리되었습니다.`);
           logger.info(`${svrIp} - 장시간 보고되지 않아 삭제 처리`);
         }
       }
@@ -136,6 +138,7 @@ class checkSvrService {
     });
 
     if (!response.ok) throw new CustomErr(`서버오류`, 500);
+    discordAlert(`nginx 서버 ${port}번 포트에 ${ip}:가 매핑되었습니다.`);
     logger.info(`nginx ${port}번 포트에 ${ip}:가 매핑되었습니다.`);
   }
   // nginx 서버 포트 삭제용
@@ -156,6 +159,7 @@ class checkSvrService {
     });
 
     if (!response.ok) throw new CustomErr(`서버오류`, 500);
+
     logger.info(`nginx ${port}번 포트가 삭제되었습니다.`);
   }
 

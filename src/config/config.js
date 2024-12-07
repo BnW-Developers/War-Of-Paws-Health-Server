@@ -1,4 +1,4 @@
-import { HOST, KEY, PORT, SALT } from '../constants/env.js';
+import { CHANNEL_ID, HOST, KEY, PORT, SALT, TOKEN } from '../constants/env.js';
 
 export const config = {
   server: {
@@ -8,5 +8,9 @@ export const config = {
   auth: {
     key: KEY,
     salt: SALT || 12,
+  },
+  discord: {
+    token: TOKEN,
+    channelId: CHANNEL_ID,
   },
 };
