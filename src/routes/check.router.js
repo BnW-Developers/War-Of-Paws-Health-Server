@@ -6,7 +6,7 @@ const router = express.Router();
 const checkController = new CheckController();
 
 router.get('/svrStatus', authMiddleware, checkController.getSvrStatus);
-router.get('/availableSvr', authMiddleware, checkController.getAvailableSvr);
+router.post('/availableSvr', authMiddleware, checkController.getAvailableSvr);
 router.post('/svrStatus', authMiddleware, checkController.setSvrStatus);
 
 export default router;
