@@ -30,10 +30,10 @@ export class CheckController {
   };
 
   // 매칭서버용
-  getAvailableSvr = (req, res, next) => {
+  getAvailableSvr = async (req, res, next) => {
     try {
       const { users } = req.body;
-      const svrPort = this.#chkSvrService.getAvailableSvr(users);
+      const svrPort = await this.#chkSvrService.getAvailableSvr(users);
       return res.status(200).json({ svrPort });
     } catch (err) {
       next(err);

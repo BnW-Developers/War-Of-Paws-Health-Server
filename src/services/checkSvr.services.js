@@ -164,7 +164,7 @@ class checkSvrService {
   }
 
   // 매칭서버 요청 관련 현재 기준 least 서버 반환 서비스
-  getAvailableSvr(users) {
+  async getAvailableSvr(users) {
     if (!this.lowServer) {
       // TODO: 게임서버 증설 메커니즘
       // TODO: 디스코드 봇 연동
@@ -181,13 +181,30 @@ class checkSvrService {
       throw new CustomErr('실행 가능한 서버가 없습니다.', 500);
     }
 
-    // TODO: 게임서버에 유저 토큰 전달
-    logger.info(`[match] 유저 토큰정보를 ${this.lowServer} 서버로 이첩 하달하였습니다.`);
+    await this.sendMatchInfo(users, this.lowServer);
+    logger.info(`[match] 유저 정보를 ${this.lowServer} 서버로 이첩 하달하였습니다.`);
 
     return this.#svrListModel.findPort(this.lowServer);
   }
+  // 게임서버 매칭정보 전달용
+  async sendMatchInfo(users, ip) {
+    const url = `http://${ip}:13571/gameSession`;
+    const key = await hashed(config.auth.key);
+    const data = {
+      users,
+    };
 
-  server;
+    const response = await fetch(url, {
+      method: 'POST', // HTTP 메서드: POST
+      headers: {
+        'Content-Type': 'application/json', // JSON 데이터 전송
+        authorization: key,
+      },
+      body: JSON.stringify(data), // 데이터를 JSON 문자열로 변환하여 전송
+    });
+
+    if (!response.ok) throw new CustomErr(`서버오류`, 500);
+  }
 }
 
 export default checkSvrService;
