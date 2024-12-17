@@ -14,7 +14,8 @@ War-Of-Paws-Health-Server는 War of Paws 게임 서버의 상태를 모니터링
 - ✅ [헬스체크 서버](https://github.com/BnW-Developers/War-Of-Paws-Health-Server)  
 
 ## 프로젝트 코드 플로우
-![image](https://github.com/user-attachments/assets/e2613aa4-52d6-48a9-aab7-db2fc16d50d2)
+![image](https://github.com/user-attachments/assets/a28b6a82-6788-4dbe-a619-c3b61d6dd534)
+
 
 ## 주요 기능
 
